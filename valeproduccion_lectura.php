@@ -42,11 +42,14 @@ switch ($method) {
             // Listado de vales asociados
             $sql = "SELECT id_vale, codigo, numero, fecha, cantidad_planificada, cantidad_producida, nropuesto, estado
                     FROM valeproduccion
-                    WHERE codigoop = $id
+                    WHERE codigoop = $id and estado = 'pendiente'
                     ORDER BY nropuesto, id_vale";
-            $vales = [];
             $res = $conn->query($sql);
-            while ($r = $res->fetch_assoc()) $vales[] = $r;
+            $vales = $res->fetch_assoc();
+            //$vales = [];
+            //$res = $conn->query($sql);
+            //while ($r = $res->fetch_assoc()) $vales[] = $r;
+
 
             echo json_encode([
                 "orden" => $orden,

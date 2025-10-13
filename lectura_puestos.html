@@ -26,6 +26,7 @@
     <p><b>Descripción:</b> <span id="descripcion"></span></p>
     <p><b>Cantidad Planificada:</b> <span id="cantPlan"></span></p>
     <p><b>Cantidad Producida:</b> <span id="cantProd"></span></p>
+    <p><b>Vale Actual:</b> <span id="valeActual"></span></p>
   </div>
 
   <div id="seccionVale" style="display:none; margin-top:15px;">
@@ -74,13 +75,15 @@
       const data = await res.json();
       ordenActual = data.orden;
       nroFormulaActual = data.orden.nroformula;
+  
       document.getElementById("infoOrden").style.display = "block";
       document.getElementById("seccionVale").style.display = "block";
 
       document.getElementById("producto").textContent = ordenActual.producto;
       document.getElementById("descripcion").textContent = ordenActual.nombre;
       document.getElementById("cantPlan").textContent = ordenActual.cantidad_planificada;
-      document.getElementById("cantProd").textContent = ordenActual.cantidad_producida;
+      document.getElementById("cantProd").textContent = data.cantidad_producida;
+      document.getElementById("valeActual").textContent = data.vales.codigo;
     }
 
     document.getElementById("btnCargarComp").addEventListener("click", async () => {

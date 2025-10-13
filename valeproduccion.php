@@ -53,12 +53,27 @@ switch ($accion) {
     case "componentes":
         $nroformula = $conexion->real_escape_string($_GET['nroformula']);
         $puesto = $conexion->real_escape_string($_GET['puesto']);
+        $id_vale = isset($_GET['id_vale']) ? intval($_GET['id_vale']) : 0;
 
-        $sql = "SELECT fd.componentes AS codigoproducto, p.nombre, fd.cantidad, fd.puesto AS puesto, fd.id_formuladetalle AS orden
+        $sql = "SELECT 
+                    fd.componentes AS codigoproducto, 
+                    p.nombre, 
+                    fd.cantidad, 
+                    fd.puesto AS puesto, 
+                    fd.id_formuladetalle AS orden,
+                    CASE 
+                        WHEN vpd.id_detalle IS NOT NULL THEN 1 
+                        ELSE 0 
+                    END AS ensamblado
                 FROM formuladetalle fd
                 INNER JOIN productos p ON p.codigoproducto = fd.componentes
-                WHERE fd.nroformula='$nroformula' AND fd.puesto='$puesto'
+                LEFT JOIN valeproducciondetalle vpd 
+                    ON vpd.producto_hijo = fd.componentes 
+                    AND vpd.codigo_vale = '$id_vale'
+                WHERE fd.nroformula='$nroformula' 
+                AND fd.puesto='$puesto'
                 ORDER BY fd.id_formuladetalle";
+        
         $res = $conexion->query($sql);
         $salida = [];
         while ($row = $res->fetch_assoc()) {

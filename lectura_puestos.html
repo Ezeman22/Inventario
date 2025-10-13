@@ -101,8 +101,9 @@
         })
       });
       valeActual = await valeRes.json();
-
-      const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}`);
+      const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}&id_vale=${valeActual.id_vale}`);
+      //const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}`);
+      
       componentes = await res.json();
 
       const tbody = document.querySelector("#tablaComponentes tbody");
@@ -114,22 +115,30 @@
           <td>${c.nombre}</td>
           <td>${c.orden}</td>
           <td>${(c.cantidad * ordenActual.cantidad_planificada).toFixed(2)}</td>
-          <td><button class="btnEnsamblar">Ensamblar</button></td>`;
+
+          <td>
+          ${c.ensamblado == 1 
+            ? '<button class="btnDeshabilitado">Ensamblado</button>' 
+            : '<button class="btnEnsamblar">Ensamblar</button>'
+          }
+        </td>`;
         
         const btn = tr.querySelector(".btnEnsamblar");
-        btn.addEventListener("click", async () => {
-          btn.disabled = true;
-          btn.textContent = "Procesando...";
-          const exito = await ensamblar(c.codigoproducto, btn);
-          if (exito) {
-            btn.textContent = "Ensamblado";
-            btn.classList.add("btnDeshabilitado");
-            verificarCierreVale();
-          } else {
-            btn.disabled = false;
-            btn.textContent = "Ensamblar";
-          }
-        });
+        if (btn) {
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            btn.textContent = "Procesando...";
+            const exito = await ensamblar(c.codigoproducto, btn);
+            if (exito) {
+              btn.textContent = "Ensamblado";
+              btn.classList.add("btnDeshabilitado");
+              verificarCierreVale();
+            } else {
+              btn.disabled = false;
+              btn.textContent = "Ensamblar";
+            }
+          });
+        }
         tbody.appendChild(tr);
       });
       document.getElementById("tablaComponentes").style.display = "table";

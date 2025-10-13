@@ -48,145 +48,170 @@
     </table>
   </div>
 
-  <script>
-    let ordenActual = null;
-    let nroFormulaActual = null;
-    let componentes = [];
-    let valeActual = null;
+<script>
+  let ordenActual = null;
+  let nroFormulaActual = null;
+  let componentes = [];
+  let valeActual = null;
 
-    async function cargarOrdenes() {
-      const res = await fetch("valeproduccion_lectura.php?accion=ordenes");
-      const data = await res.json();
-      const sel = document.getElementById("ordenSelect");
-      sel.innerHTML = '<option value="">Seleccione...</option>';
-      data.forEach(o => {
-        const opt = document.createElement("option");
-        opt.value = o.id_orden;
-        opt.textContent = `#${o.id_orden} - ${o.nombre}`;
-        sel.appendChild(opt);
-      });
-      sel.addEventListener("change", () => {
-        if (sel.value) cargarOrden(sel.value);
-      });
-    }
+  async function cargarOrdenes() {
+    const res = await fetch("valeproduccion_lectura.php?accion=ordenes");
+    const data = await res.json();
+    const sel = document.getElementById("ordenSelect");
+    sel.innerHTML = '<option value="">Seleccione...</option>';
+    data.forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.id_orden;
+      opt.textContent = `#${o.id_orden} - ${o.nombre}`;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", () => {
+      if (sel.value) cargarOrden(sel.value);
+    });
+  }
 
-    async function cargarOrden(id) {
-      const res = await fetch(`valeproduccion_lectura.php?id_orden=${id}`);
-      const data = await res.json();
-      ordenActual = data.orden;
-      nroFormulaActual = data.orden.nroformula;
-  
-      document.getElementById("infoOrden").style.display = "block";
-      document.getElementById("seccionVale").style.display = "block";
+  async function cargarOrden(id) {
+    const res = await fetch(`valeproduccion_lectura.php?id_orden=${id}`);
+    const data = await res.json();
+    ordenActual = data.orden;
+    nroFormulaActual = data.orden.nroformula;
 
-      document.getElementById("producto").textContent = ordenActual.producto;
-      document.getElementById("descripcion").textContent = ordenActual.nombre;
-      document.getElementById("cantPlan").textContent = ordenActual.cantidad_planificada;
-      document.getElementById("cantProd").textContent = data.cantidad_producida;
-      document.getElementById("valeActual").textContent = data.vales.codigo;
-    }
+    document.getElementById("infoOrden").style.display = "block";
+    document.getElementById("seccionVale").style.display = "block";
 
-    document.getElementById("btnCargarComp").addEventListener("click", async () => {
-      const puesto = document.getElementById("nroPuesto").value;
+    document.getElementById("producto").textContent = ordenActual.producto;
+    document.getElementById("descripcion").textContent = ordenActual.nombre;
+    document.getElementById("cantPlan").textContent = ordenActual.cantidad_planificada;
+    document.getElementById("cantProd").textContent = data.cantidad_producida;
+    document.getElementById("valeActual").textContent = data.vales.codigo;
+  }
 
-      // Crear un vale pendiente o recuperar uno activo
-      const valeRes = await fetch("valeproduccion.php", {
-        method: "POST",
-        body: JSON.stringify({
-          accion: "crear_o_recuperar_vale",
-          codigoop: ordenActual.id_orden,
-          nropuesto: puesto,
-          cantidad_planificada: ordenActual.cantidad_planificada,
-          producto_padre: ordenActual.producto
-        })
-      });
-      valeActual = await valeRes.json();
-      const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}&id_vale=${valeActual.id_vale}`);
-      //const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}`);
-      
-      componentes = await res.json();
+  document.getElementById("btnCargarComp").addEventListener("click", async () => {
+    const puesto = document.getElementById("nroPuesto").value;
 
-      const tbody = document.querySelector("#tablaComponentes tbody");
-      tbody.innerHTML = "";
-      componentes.forEach(c => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${c.codigoproducto}</td>
-          <td>${c.nombre}</td>
-          <td>${c.orden}</td>
-          <td>${(c.cantidad * ordenActual.cantidad_planificada).toFixed(2)}</td>
+    // Crear o recuperar vale pendiente
+    const valeRes = await fetch("valeproduccion.php", {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "crear_o_recuperar_vale",
+        codigoop: ordenActual.id_orden,
+        nropuesto: puesto,
+        cantidad_planificada: ordenActual.cantidad_planificada,
+        producto_padre: ordenActual.producto
+      })
+    });
+    valeActual = await valeRes.json();
 
-          <td>
-          ${c.ensamblado == 1 
+    const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}&id_vale=${valeActual.id_vale}`);
+    componentes = await res.json();
+
+    const tbody = document.querySelector("#tablaComponentes tbody");
+    tbody.innerHTML = "";
+    let ensamblados = 0;
+
+    componentes.forEach(c => {
+      const tr = document.createElement("tr");
+      const esEnsamblado = c.ensamblado == 1;
+      if (esEnsamblado) ensamblados++;
+
+      tr.innerHTML = `
+        <td>${c.codigoproducto}</td>
+        <td>${c.nombre}</td>
+        <td>${c.orden}</td>
+        <td>${(c.cantidad * ordenActual.cantidad_planificada).toFixed(2)}</td>
+        <td>
+          ${esEnsamblado 
             ? '<button class="btnDeshabilitado">Ensamblado</button>' 
             : '<button class="btnEnsamblar">Ensamblar</button>'
           }
         </td>`;
-        
-        const btn = tr.querySelector(".btnEnsamblar");
-        if (btn) {
-          btn.addEventListener("click", async () => {
-            btn.disabled = true;
-            btn.textContent = "Procesando...";
-            const exito = await ensamblar(c.codigoproducto, btn);
-            if (exito) {
-              btn.textContent = "Ensamblado";
-              btn.classList.add("btnDeshabilitado");
-              verificarCierreVale();
-            } else {
-              btn.disabled = false;
-              btn.textContent = "Ensamblar";
-            }
-          });
-        }
-        tbody.appendChild(tr);
-      });
-      document.getElementById("tablaComponentes").style.display = "table";
+
+      const btn = tr.querySelector(".btnEnsamblar");
+      if (btn) {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          btn.textContent = "Procesando...";
+          const exito = await ensamblar(c.codigoproducto, btn);
+          if (exito) {
+            btn.textContent = "Ensamblado";
+            btn.classList.add("btnDeshabilitado");
+            verificarCierreVale();
+          } else {
+            btn.disabled = false;
+            btn.textContent = "Ensamblar";
+          }
+        });
+      }
+
+      tbody.appendChild(tr);
     });
 
-    async function ensamblar(codHijo, btn) {
-      const payload = {
-        accion: "ensamblar",
+    document.getElementById("tablaComponentes").style.display = "table";
+
+    // 🧩 Si ya estaban todos ensamblados, cerrar el vale automáticamente
+    if (ensamblados === componentes.length && componentes.length > 0) {
+      await cerrarValeAutomatico();
+    }
+  });
+
+  async function ensamblar(codHijo, btn) {
+    const payload = {
+      accion: "ensamblar",
+      id_vale: valeActual.id_vale,
+      codigoop: ordenActual.id_orden,
+      producto_padre: ordenActual.producto,
+      producto_hijo: codHijo
+    };
+
+    const res = await fetch("valeproduccion.php", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.success;
+  }
+
+  async function verificarCierreVale() {
+    // 🔄 Ahora consultamos al servidor si ya están todos los componentes ensamblados
+    const res = await fetch("valeproduccion.php", {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "verificar_cierre_vale",
         id_vale: valeActual.id_vale,
         codigoop: ordenActual.id_orden,
-        producto_padre: ordenActual.producto,
-        producto_hijo: codHijo
-      };
+        nroformula: nroFormulaActual
+      })
+    });
 
-      const res = await fetch("valeproduccion.php", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
+    const data = await res.json();
 
-      if (!res.ok) return false;
-      const data = await res.json();
-      return data.success;
+    if (data.success && data.completo) {
+      await cerrarValeAutomatico();
     }
+  }
 
-    async function verificarCierreVale() {
-      const ensamblados = [...document.querySelectorAll(".btnEnsamblar.btnDeshabilitado")].length;
-      const total = componentes.length;
-
-      if (ensamblados === total) {
-        // cerrar vale
-        const res = await fetch("valeproduccion.php", {
-          method: "POST",
-          body: JSON.stringify({
-            accion: "cerrar_vale",
-            id_vale: valeActual.id_vale,
-            codigoop: ordenActual.id_orden
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert("Vale terminado correctamente ✅");
-          document.getElementById("cantProd").textContent = data.nueva_cantidad_producida;
-          valeActual = null;
-        }
-      }
+  async function cerrarValeAutomatico() {
+    const res = await fetch("valeproduccion.php", {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "cerrar_vale",
+        id_vale: valeActual.id_vale,
+        codigoop: ordenActual.id_orden
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("✅ Vale terminado correctamente");
+      document.getElementById("cantProd").textContent = data.nueva_cantidad_producida;
+      document.getElementById("valeActual").textContent = "— (Cerrado)";
+      valeActual = null;
     }
+  }
 
-    cargarOrdenes();
-  </script>
+  cargarOrdenes();
+</script>
+
 </body>
 </html>

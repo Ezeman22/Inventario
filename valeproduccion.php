@@ -97,6 +97,39 @@ switch ($accion) {
         echo json_encode(["success" => $ok]);
         break;
 
+    case "verificar_cierre_vale":
+        $input = json_decode(file_get_contents("php://input"), true);
+        $id_vale = $input["id_vale"];
+        $codigoop = $input["codigoop"];
+        $nroformula = $input["nroformula"];
+
+        // 1️⃣ Contar cuántos componentes tiene la fórmula (todas las estaciones)
+        $sqlFormula = "SELECT COUNT(*) AS total_componentes 
+                    FROM formula 
+                    WHERE nroformula = '$nroformula'";
+        $resFormula = $conn->query($sqlFormula);
+        $rowFormula = $resFormula->fetch_assoc();
+        $totalFormula = $rowFormula["total_componentes"];
+
+        // 2️⃣ Contar cuántos componentes están ensamblados (detalle)
+        $sqlDetalle = "SELECT COUNT(DISTINCT codigoproductohijo) AS ensamblados
+                    FROM valeproducciondetalle 
+                    WHERE id_vale = '$id_vale'";
+        $resDetalle = $conn->query($sqlDetalle);
+        $rowDetalle = $resDetalle->fetch_assoc();
+        $totalEnsamblados = $rowDetalle["ensamblados"];
+
+        // 3️⃣ Comparar totales
+        $completo = ($totalFormula == $totalEnsamblados);
+
+        echo json_encode([
+            "success" => true,
+            "completo" => $completo,
+            "total_formula" => $totalFormula,
+            "total_ensamblados" => $totalEnsamblados
+        ]);
+        break;
+
     // 🔹 Cerrar vale (cuando se ensamblan todos los componentes)
     case "cerrar_vale":
         $id_vale = intval($data['id_vale']);

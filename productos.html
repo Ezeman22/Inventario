@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ABM de Productos</title>
+  <!-- <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f4f4f4; }
+    form { margin-top: 20px; }
+    input, select { margin: 5px; padding: 5px; }
+    button { margin: 5px; padding: 5px 10px; }
+  </style> -->
+</head>
+<body>
+  <h1>Productos</h1>
+
+  <table id="tablaProductos">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Costo</th>
+        <th>Unidad</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Agregar / Editar Producto</h2>
+  <form id="formProducto">
+    <input type="text" id="codigoproducto" placeholder="Código" required>
+    <input type="text" id="nombre" placeholder="Nombre" required>
+    <select id="tipoproducto">
+      <option value="Componente">Componente</option>
+      <option value="Semielaborado">Semielaborado</option>
+      <option value="Producto Terminado">Producto Terminado</option>
+      <option value="Consumible">Consumible</option>
+    </select>
+    <input type="number" step="0.01" id="costoproducto" placeholder="Costo">
+    <input type="text" id="unidadmedida" placeholder="Unidad">
+    <button type="submit">Guardar</button>
+  </form>
+
+  <script>
+    async function cargarProductos(){
+      let res = await fetch("producto.php");
+      let productos = await res.json();
+      let tbody = document.querySelector("#tablaProductos tbody");
+      tbody.innerHTML = "";
+
+      productos.forEach(p => {
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.codigoproducto}</td>
+          <td>${p.nombre}</td>
+          <td>${p.tipoproducto}</td>
+          <td>${p.costoproducto}</td>
+          <td>${p.unidadmedida}</td>
+          <td>
+            <button onclick="editarProducto('${p.codigoproducto}','${p.nombre}','${p.tipoproducto}','${p.costoproducto}','${p.unidadmedida}')">Editar</button>
+            <button onclick="eliminarProducto('${p.codigoproducto}')">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function eliminarProducto(codigo){
+      if(!confirm("¿Seguro que quieres eliminar el producto " + codigo + "?")) return;
+      await fetch("producto.php", {
+        method: "DELETE",
+        body: JSON.stringify({ codigoproducto: codigo })
+      });
+      cargarProductos();
+    }
+
+    function editarProducto(codigo, nombre, tipo, costo, unidad){
+      document.getElementById("codigoproducto").value = codigo;
+      document.getElementById("nombre").value = nombre;
+      document.getElementById("tipoproducto").value = tipo;
+      document.getElementById("costoproducto").value = costo;
+      document.getElementById("unidadmedida").value = unidad;
+    }
+
+    document.getElementById("formProducto").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    let data = {
+        codigoproducto: document.getElementById("codigoproducto").value,
+        nombre: document.getElementById("nombre").value,
+        tipoproducto: document.getElementById("tipoproducto").value,
+        costoproducto: document.getElementById("costoproducto").value,
+        unidadmedida: document.getElementById("unidadmedida").value
+    };
+
+    // Pedimos los productos para ver si ya existe ese código
+    let res = await fetch("producto.php");
+    let productos = await res.json();
+
+    let existe = productos.some(p => p.codigoproducto === data.codigoproducto);
+    let method = existe ? "PUT" : "POST";
+
+    await fetch("producto.php", {
+        method: method,
+        body: JSON.stringify(data)
+    });
+
+    e.target.reset();
+    cargarProductos();
+    });
+
+    cargarProductos();
+  </script>
+</body>
+</html>

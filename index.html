@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Producción</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    select, table { margin-top: 15px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>Órdenes de Producción</h1>
+
+  <label for="formula">Seleccionar Fórmula:</label>
+  <select id="formula"></select>
+
+  <button>Seleccionar</button>
+
+  <h2 id="productoTerminado"></h2>
+
+  <table id="detalleTabla">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Cantidad Necesaria</th>
+        <th>Stock Disponible</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function cargarFormulas(){
+      let res = await fetch("get_formulas.php");
+      let formulas = await res.json();
+      let select = document.getElementById("formula");
+
+      formulas.forEach(f => {
+        let opt = document.createElement("option");
+        opt.value = f.nroformula;
+        opt.textContent = `${f.nroformula} - ${f.producto}`;
+        select.appendChild(opt);
+      });
+
+      if(formulas.length > 0){
+        mostrarDetalle(formulas[0].nroformula, formulas[0].producto);
+      }
+
+      select.addEventListener("change", e => {
+        let prod = formulas.find(f => f.nroformula === e.target.value).producto;
+        mostrarDetalle(e.target.value, prod);
+      });
+    }
+
+    async function mostrarDetalle(nroformula, producto){
+      document.getElementById("productoTerminado").textContent =
+        "Producto a producir: " + producto;
+
+      let res = await fetch("get_detalle_formula.php?nroformula=" + nroformula);
+      let detalle = await res.json();
+
+      let tbody = document.querySelector("#detalleTabla tbody");
+      tbody.innerHTML = "";
+
+      detalle.forEach(d => {
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${d.componentes}</td>
+          <td>${d.nombre}</td>
+          <td>${d.tipoproducto}</td>
+          <td>${d.cantidad}</td>
+          <td>${d.stock}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    cargarFormulas();
+  </script>
+</body>
+</html>

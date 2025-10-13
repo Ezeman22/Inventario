@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>ABM Fórmulas</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background: #f4f4f4; }
+    select, input { margin: 5px; padding: 5px; }
+    button { margin: 5px; padding: 5px 10px; }
+    #detalleForm tr td input { width: 80px; }
+  </style>
+</head>
+<body>
+  <h1>Fórmulas</h1>
+
+  <label>Producto Terminado:</label>
+  <select id="productoSelect"></select>
+
+  <h2>Fórmulas</h2>
+  <ul id="listaFormulas"></ul>
+
+  <h3>Detalle de Fórmula</h3>
+  <table id="tablaDetalle">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Cantidad</th>
+        <th>Orden</th>
+        <th>Puesto</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Nueva Fórmula</h2>
+  <form id="formNueva">
+    <input type="text" id="nroformula" placeholder="Nro Fórmula" required>
+    <input type="text" id="version" placeholder="Versión" required>
+    <table id="detalleForm">
+      <thead>
+        <tr>
+          <th>Componente</th><th>Cantidad</th><th>orden</th><th>puesto</th><th>Acción</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button type="button" onclick="agregarFila()">Agregar Componente</button>
+    <button type="submit">Guardar Fórmula</button>
+  </form>
+
+  <script>
+    let productos = [];
+
+    async function cargarProductosTerminados(){
+      let res = await fetch("formulas.php?accion=productos");
+      let data = await res.json();
+      let sel = document.getElementById("productoSelect");
+      sel.innerHTML = "";
+      data.forEach(p=>{
+        let opt = document.createElement("option");
+        opt.value = p.codigoproducto;
+        opt.textContent = p.nombre;
+        sel.appendChild(opt);
+      });
+      if(data.length>0) cargarFormulas(data[0].codigoproducto);
+      sel.addEventListener("change", e=> cargarFormulas(e.target.value));
+    }
+
+    async function cargarFormulas(producto){
+      let res = await fetch("formulas.php?producto="+producto);
+      let data = await res.json();
+      let lista = document.getElementById("listaFormulas");
+      lista.innerHTML = "";
+      data.forEach(f=>{
+        let li = document.createElement("li");
+        li.innerHTML = `${f.nroformula} (v${f.version}) 
+          <button onclick="verDetalle('${f.nroformula}')">Ver</button>
+          <button onclick="eliminarFormula('${f.nroformula}')">Eliminar</button>`;
+        lista.appendChild(li);
+      });
+    }
+
+    async function verDetalle(nro){
+      let res = await fetch("formulas.php?nroformula="+nro);
+      let data = await res.json();
+      let tbody = document.querySelector("#tablaDetalle tbody");
+      tbody.innerHTML = "";
+      data.forEach(d=>{
+        let tr = document.createElement("tr");
+        tr.innerHTML = `<td>${d.componentes}</td><td>${d.nombre}</td><td>${d.tipoproducto}</td><td>${d.cantidad}</td><td>${d.orden}</td><td>${d.puesto}</td> `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function eliminarFormula(nro){
+      if(!confirm("¿Eliminar fórmula "+nro+"?")) return;
+      await fetch("formulas.php", {
+        method:"DELETE",
+        body: JSON.stringify({nroformula:nro})
+      });
+      cargarFormulas(document.getElementById("productoSelect").value);
+    }
+
+    function agregarFila(){
+      let tbody = document.querySelector("#detalleForm tbody");
+      let tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="text" placeholder="Código componente"></td>
+        <td><input type="number" step="0.01" value="1"></td>
+        <td><input type="number" step="1" value="1"></td>
+        <td><input type="number" step="1" value="1"></td> 
+        <td><button type="button" onclick="this.parentNode.parentNode.remove()">X</button></td>`;
+      tbody.appendChild(tr);
+    }
+    document.getElementById("formNueva").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      let producto = document.getElementById("productoSelect").value;
+      let nroformula = document.getElementById("nroformula").value;
+      let version = document.getElementById("version").value;
+
+      let detalle = [];
+      document.querySelectorAll("#detalleForm tbody tr").forEach(tr=>{
+        let comp = tr.children[0].querySelector("input").value;
+        let cant = tr.children[1].querySelector("input").value;
+        let ord = tr.children[2].querySelector("input").value;
+        let pues = tr.children[3].querySelector("input").value;
+        detalle.push({componentes: comp, cantidad: cant, orden: ord, puesto: pues});
+      });
+
+      await fetch("formulas.php", {
+        method:"POST",
+        body: JSON.stringify({nroformula, producto, version, detalle})
+      });
+
+      e.target.reset();
+      document.querySelector("#detalleForm tbody").innerHTML = "";
+      cargarFormulas(producto);
+    });
+    cargarProductosTerminados();
+  </script>
+</body>
+</html>

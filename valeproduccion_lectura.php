@@ -40,10 +40,10 @@ switch ($method) {
             $produccion = $res->fetch_assoc()["cantidad_producida"];
 
             // Listado de vales asociados
-            $sql = "SELECT id_vale, codigo, numero, fecha, cantidad_planificada, cantidad_producida, nropuesto, estado
+            $sql = "SELECT id_vale, codigo, numero, fecha, cantidad_planificada, cantidad_producida,  estado
                     FROM valeproduccion
                     WHERE codigoop = $id and estado = 'pendiente'
-                    ORDER BY nropuesto, id_vale";
+                    ORDER BY  id_vale";
             $res = $conn->query($sql);
             $vales = $res->fetch_assoc();
             //$vales = [];

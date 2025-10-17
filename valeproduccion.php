@@ -16,25 +16,22 @@ switch ($accion) {
     // 🔹 Crear o recuperar vale pendiente
     case "crear_o_recuperar_vale":
         $codigoop = $conexion->real_escape_string($data['codigoop']);
-        $nropuesto = intval($data['nropuesto']);
         $cantidad_planificada = intval($data['cantidad_planificada']);
         $producto_padre = $conexion->real_escape_string($data['producto_padre']);
 
-        // Buscar vale pendiente
         $sql = "SELECT * FROM valeproduccion 
-                WHERE codigoop='$codigoop' AND nropuesto='$nropuesto' AND estado='pendiente' 
+                WHERE codigoop='$codigoop' AND estado='pendiente' 
                 LIMIT 1";
         $res = $conexion->query($sql);
 
         if ($res && $res->num_rows > 0) {
             $vale = $res->fetch_assoc();
         } else {
-            // Crear nuevo número de vale
             $sqlNum = "SELECT IFNULL(MAX(numero),0)+1 AS nuevoNumero FROM valeproduccion";
             $nuevoNumero = $conexion->query($sqlNum)->fetch_assoc()['nuevoNumero'];
 
-            $sqlInsert = "INSERT INTO valeproduccion (codigo, numero, codigoop, fecha, cantidad_producida, cantidad_planificada, nropuesto, estado)
-                          VALUES (CONCAT('VP', LPAD($nuevoNumero, 5, '0')), $nuevoNumero, '$codigoop', NOW(), 0, $cantidad_planificada, $nropuesto, 'pendiente')";
+            $sqlInsert = "INSERT INTO valeproduccion (codigo, numero, codigoop, fecha, cantidad_planificada, estado)
+                        VALUES (CONCAT('VP', LPAD($nuevoNumero, 5, '0')), $nuevoNumero, '$codigoop', NOW(), $cantidad_planificada, 'pendiente')";
             $conexion->query($sqlInsert);
             $id_vale = $conexion->insert_id;
 
@@ -69,7 +66,7 @@ switch ($accion) {
                 INNER JOIN productos p ON p.codigoproducto = fd.componentes
                 LEFT JOIN valeproducciondetalle vpd 
                     ON vpd.producto_hijo = fd.componentes 
-                    AND vpd.codigo_vale = '$id_vale'
+                    AND vpd.id_vale = '$id_vale'
                 WHERE fd.nroformula='$nroformula' 
                 AND fd.puesto='$puesto'
                 ORDER BY fd.id_formuladetalle";
@@ -88,64 +85,86 @@ switch ($accion) {
         $codigoop = $conexion->real_escape_string($data['codigoop']);
         $producto_padre = $conexion->real_escape_string($data['producto_padre']);
         $producto_hijo = $conexion->real_escape_string($data['producto_hijo']);
+        $nropuesto = intval($data['nropuesto']);
 
-        // Insertar el detalle del vale
-        $sql = "INSERT INTO valeproducciondetalle (codigo_vale, producto_padre, producto_hijo, fecha, estado)
-                VALUES ('$id_vale', '$producto_padre', '$producto_hijo', NOW(), 'terminado')";
+        // Verificar si ya existe ese componente
+        $check = $conexion->query("SELECT 1 FROM valeproducciondetalle 
+                                WHERE id_vale=$id_vale 
+                                AND producto_hijo='$producto_hijo' 
+                                AND nropuesto=$nropuesto");
+        if ($check && $check->num_rows > 0) {
+            echo json_encode(["success" => true, "message" => "Ya ensamblado"]);
+            break;
+        }
+
+        // Insertar detalle
+        $sql = "INSERT INTO valeproducciondetalle (id_vale, producto_padre, producto_hijo, nropuesto, fecha, estado)
+                VALUES ($id_vale, '$producto_padre', '$producto_hijo', $nropuesto, NOW(), 'terminado')";
         $ok = $conexion->query($sql);
 
         echo json_encode(["success" => $ok]);
         break;
+    
+    case "cerrar_y_crear_vale":
+        $id_vale = intval($data["id_vale"]);
+        $codigoop = $conexion->real_escape_string($data["codigoop"]);
+        $producto_padre = $conexion->real_escape_string($data["producto_padre"]);
+        $cantidad_planificada = intval($data["cantidad_planificada"]);
 
-    case "verificar_cierre_vale":
-        $input = json_decode(file_get_contents("php://input"), true);
-        $id_vale = $input["id_vale"];
-        $codigoop = $input["codigoop"];
-        $nroformula = $input["nroformula"];
+        // 🔒 1️⃣ Cerrar el vale actual
+        $conexion->query("UPDATE valeproduccion 
+                        SET estado='terminada', cantidad_producida=1 
+                        WHERE id_vale=$id_vale");
 
-        // 1️⃣ Contar cuántos componentes tiene la fórmula (todas las estaciones)
-        $sqlFormula = "SELECT COUNT(*) AS total_componentes 
-                    FROM formula 
-                    WHERE nroformula = '$nroformula'";
-        $resFormula = $conn->query($sqlFormula);
-        $rowFormula = $resFormula->fetch_assoc();
-        $totalFormula = $rowFormula["total_componentes"];
+        // 🔄 2️⃣ Actualizar cantidad_producida en la orden de producción
+        $conexion->query("UPDATE ordenproduccion 
+                        SET cantidad_producida = cantidad_producida + 1 
+                        WHERE id_orden='$codigoop'");
 
-        // 2️⃣ Contar cuántos componentes están ensamblados (detalle)
-        $sqlDetalle = "SELECT COUNT(DISTINCT codigoproductohijo) AS ensamblados
-                    FROM valeproducciondetalle 
-                    WHERE id_vale = '$id_vale'";
-        $resDetalle = $conn->query($sqlDetalle);
-        $rowDetalle = $resDetalle->fetch_assoc();
-        $totalEnsamblados = $rowDetalle["ensamblados"];
+        // 🔢 3️⃣ Generar nuevo número de vale
+        $sqlNum = "SELECT IFNULL(MAX(numero),0)+1 AS nuevoNumero FROM valeproduccion";
+        $nuevoNumero = $conexion->query($sqlNum)->fetch_assoc()['nuevoNumero'];
 
-        // 3️⃣ Comparar totales
-        $completo = ($totalFormula == $totalEnsamblados);
+        // 🆕 4️⃣ Crear nuevo vale
+        $codigoVale = 'VP' . str_pad($nuevoNumero, 5, '0', STR_PAD_LEFT);
+        $sqlInsert = "INSERT INTO valeproduccion 
+                    (codigo, numero, codigoop, fecha, cantidad_planificada, cantidad_producida, estado)
+                    VALUES ('$codigoVale', $nuevoNumero, '$codigoop', NOW(), $cantidad_planificada, 0, 'pendiente')";
+        $conexion->query($sqlInsert);
+        $idNuevoVale = $conexion->insert_id;
 
-        echo json_encode([
-            "success" => true,
-            "completo" => $completo,
-            "total_formula" => $totalFormula,
-            "total_ensamblados" => $totalEnsamblados
-        ]);
-        break;
-
-    // 🔹 Cerrar vale (cuando se ensamblan todos los componentes)
-    case "cerrar_vale":
-        $id_vale = intval($data['id_vale']);
-        $codigoop = $conexion->real_escape_string($data['codigoop']);
-
-        // Marcar vale como terminado
-        $conexion->query("UPDATE valeproduccion SET estado='terminada', cantidad_producida=1 WHERE id_vale=$id_vale");
-
-        // Sumar cantidad_producida en la orden de producción
-        $conexion->query("UPDATE ordenproduccion SET cantidad_producida = cantidad_producida + 1 WHERE id_orden='$codigoop'");
-
-        // Obtener nuevo total
+        // 📊 5️⃣ Consultar la cantidad actualizada
         $res = $conexion->query("SELECT cantidad_producida FROM ordenproduccion WHERE id_orden='$codigoop'");
         $nuevaCant = $res->fetch_assoc()['cantidad_producida'];
 
-        echo json_encode(["success" => true, "nueva_cantidad_producida" => $nuevaCant]);
+        echo json_encode([
+            "success" => true,
+            "nueva_cantidad_producida" => $nuevaCant,
+            "nuevo_vale" => [
+                "id_vale" => $idNuevoVale,
+                "numero" => $nuevoNumero,
+                "codigo" => $codigoVale,
+                "estado" => "pendiente"
+            ]
+        ]);
+        break;
+
+    case "verificar_cierre_vale":
+        $id_vale = intval($data['id_vale']);
+        $codigoop = $conexion->real_escape_string($data['codigoop']);
+        $nroformula = $conexion->real_escape_string($data['nroformula']);
+
+        // Total de componentes de la fórmula
+        $total = $conexion->query("SELECT COUNT(*) AS total FROM formuladetalle WHERE nroformula='$nroformula'")
+                        ->fetch_assoc()['total'];
+
+        // Total ensamblados (vale actual)
+        $hechos = $conexion->query("SELECT COUNT(*) AS hechos FROM valeproducciondetalle WHERE id_vale=$id_vale")
+                        ->fetch_assoc()['hechos'];
+
+        $completo = ($hechos >= $total);
+
+        echo json_encode(["success" => true, "completo" => $completo]);
         break;
 
     default:

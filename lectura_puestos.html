@@ -27,6 +27,9 @@
     <p><b>Cantidad Planificada:</b> <span id="cantPlan"></span></p>
     <p><b>Cantidad Producida:</b> <span id="cantProd"></span></p>
     <p><b>Vale Actual:</b> <span id="valeActual"></span></p>
+    <button id="btnCerrarVale" style="display:none; margin-top:10px; padding:8px 16px; background:#007bff; color:white; border:none; border-radius:6px; cursor:pointer;">
+      Cerrar Vale
+    </button>
   </div>
 
   <div id="seccionVale" style="display:none; margin-top:15px;">
@@ -84,6 +87,7 @@
     document.getElementById("cantPlan").textContent = ordenActual.cantidad_planificada;
     document.getElementById("cantProd").textContent = data.cantidad_producida;
     document.getElementById("valeActual").textContent = data.vales.codigo;
+    
   }
 
   document.getElementById("btnCargarComp").addEventListener("click", async () => {
@@ -160,7 +164,8 @@
       id_vale: valeActual.id_vale,
       codigoop: ordenActual.id_orden,
       producto_padre: ordenActual.producto,
-      producto_hijo: codHijo
+      producto_hijo: codHijo,
+      nropuesto : document.getElementById("nroPuesto").value
     };
 
     const res = await fetch("valeproduccion.php", {
@@ -174,7 +179,6 @@
   }
 
   async function verificarCierreVale() {
-    // 🔄 Ahora consultamos al servidor si ya están todos los componentes ensamblados
     const res = await fetch("valeproduccion.php", {
       method: "POST",
       body: JSON.stringify({
@@ -187,28 +191,54 @@
 
     const data = await res.json();
 
-    if (data.success && data.completo) {
-      await cerrarValeAutomatico();
+    if (data.success) {
+      if (data.completo) {
+        document.getElementById("btnCerrarVale").style.display = "inline-block";
+      } else {
+        document.getElementById("btnCerrarVale").style.display = "none";
+      }
     }
   }
 
-  async function cerrarValeAutomatico() {
+    document.getElementById("btnCerrarVale").addEventListener("click", async () => {
+    if (!valeActual || !ordenActual) return;
+
+    // Confirmación opcional
+    if (!confirm("¿Deseás cerrar el vale actual y generar uno nuevo?")) return;
+
     const res = await fetch("valeproduccion.php", {
       method: "POST",
       body: JSON.stringify({
-        accion: "cerrar_vale",
+        accion: "cerrar_y_crear_vale",
         id_vale: valeActual.id_vale,
-        codigoop: ordenActual.id_orden
+        codigoop: ordenActual.id_orden,
+        producto_padre: ordenActual.producto,
+        cantidad_planificada: ordenActual.cantidad_planificada
       })
     });
+
     const data = await res.json();
+
     if (data.success) {
-      alert("✅ Vale terminado correctamente");
+      alert("Vale cerrado y nuevo vale creado correctamente ✅");
+
+      // 🔄 Actualizamos datos en pantalla
       document.getElementById("cantProd").textContent = data.nueva_cantidad_producida;
-      document.getElementById("valeActual").textContent = "— (Cerrado)";
-      valeActual = null;
+      document.getElementById("valeActual").textContent = data.nuevo_vale.codigo ?? `VP${String(data.nuevo_vale.numero).padStart(5, '0')}`;
+
+      // Reiniciamos el vale actual en el frontend
+      valeActual = data.nuevo_vale;
+
+      // Limpiamos componentes en pantalla
+      const tbody = document.querySelector("#tablaComponentes tbody");
+      tbody.innerHTML = "";
+      document.getElementById("tablaComponentes").style.display = "none";
+
+      alert("Podés comenzar a cargar los componentes del nuevo vale.");
+    } else {
+      alert("❌ Error al cerrar y crear nuevo vale.");
     }
-  }
+  });
 
   cargarOrdenes();
 </script>

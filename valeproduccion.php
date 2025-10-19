@@ -98,8 +98,8 @@ switch ($accion) {
         }
 
         // Insertar detalle
-        $sql = "INSERT INTO valeproducciondetalle (id_vale, producto_padre, producto_hijo, nropuesto, fecha, estado)
-                VALUES ($id_vale, '$producto_padre', '$producto_hijo', $nropuesto, NOW(), 'terminado')";
+        $sql = "INSERT INTO valeproducciondetalle (id_vale, producto_padre, producto_hijo, nropuesto, fecha, estado, nroserie)
+                VALUES ($id_vale, '$producto_padre', '$producto_hijo', $nropuesto, NOW(), 'terminado', CONCAT($id_vale, '-', $nropuesto,'-', '$producto_padre' ) )";
         $ok = $conexion->query($sql);
 
         echo json_encode(["success" => $ok]);

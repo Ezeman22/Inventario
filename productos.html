@@ -3,49 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <title>ABM de Productos</title>
-  <!-- <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #f4f4f4; }
-    form { margin-top: 20px; }
-    input, select { margin: 5px; padding: 5px; }
-    button { margin: 5px; padding: 5px 10px; }
-  </style> -->
+  <link rel="stylesheet" href="style_productos.css">
 </head>
 <body>
-  <h1>Productos</h1>
+  <header>
+    <h1>Gestión de Productos</h1>
+    <p>Alta, baja y modificación de productos del sistema</p>
+  </header>
 
-  <table id="tablaProductos">
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Nombre</th>
-        <th>Tipo</th>
-        <th>Costo</th>
-        <th>Unidad</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <main>
+    <section class="tabla-section">
+      <h2>Listado de Productos</h2>
+      <table id="tablaProductos">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Costo</th>
+            <th>Unidad</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
 
-  <h2>Agregar / Editar Producto</h2>
-  <form id="formProducto">
-    <input type="text" id="codigoproducto" placeholder="Código" required>
-    <input type="text" id="nombre" placeholder="Nombre" required>
-    <select id="tipoproducto">
-      <option value="Componente">Componente</option>
-      <option value="Semielaborado">Semielaborado</option>
-      <option value="Producto Terminado">Producto Terminado</option>
-      <option value="Consumible">Consumible</option>
-    </select>
-    <input type="number" step="0.01" id="costoproducto" placeholder="Costo">
-    <input type="text" id="unidadmedida" placeholder="Unidad">
-    <button type="submit">Guardar</button>
-  </form>
+    <section class="form-section">
+      <h2>Agregar / Editar Producto</h2>
+      <form id="formProducto">
+        <div class="form-grid">
+          <input type="text" id="codigoproducto" placeholder="Código" required>
+          <input type="text" id="nombre" placeholder="Nombre" required>
+          <select id="tipoproducto">
+            <option value="Componente">Componente</option>
+            <option value="Semielaborado">Semielaborado</option>
+            <option value="Producto Terminado">Producto Terminado</option>
+            <option value="Consumible">Consumible</option>
+          </select>
+          <input type="number" step="0.01" id="costoproducto" placeholder="Costo">
+          <input type="text" id="unidadmedida" placeholder="Unidad">
+        </div>
+        <button type="submit" class="btn-guardar">Guardar</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="anio"></span> Sistema de Producción — ABM de Productos
+  </footer>
 
   <script>
+    document.getElementById('anio').textContent = new Date().getFullYear();
+
     async function cargarProductos(){
       let res = await fetch("producto.php");
       let productos = await res.json();
@@ -61,8 +71,8 @@
           <td>${p.costoproducto}</td>
           <td>${p.unidadmedida}</td>
           <td>
-            <button onclick="editarProducto('${p.codigoproducto}','${p.nombre}','${p.tipoproducto}','${p.costoproducto}','${p.unidadmedida}')">Editar</button>
-            <button onclick="eliminarProducto('${p.codigoproducto}')">Eliminar</button>
+            <button class="btn-editar" onclick="editarProducto('${p.codigoproducto}','${p.nombre}','${p.tipoproducto}','${p.costoproducto}','${p.unidadmedida}')">Editar</button>
+            <button class="btn-eliminar" onclick="eliminarProducto('${p.codigoproducto}')">Eliminar</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -87,30 +97,29 @@
     }
 
     document.getElementById("formProducto").addEventListener("submit", async (e) => {
-    e.preventDefault();
+      e.preventDefault();
 
-    let data = {
-        codigoproducto: document.getElementById("codigoproducto").value,
-        nombre: document.getElementById("nombre").value,
-        tipoproducto: document.getElementById("tipoproducto").value,
-        costoproducto: document.getElementById("costoproducto").value,
-        unidadmedida: document.getElementById("unidadmedida").value
-    };
+      let data = {
+          codigoproducto: document.getElementById("codigoproducto").value,
+          nombre: document.getElementById("nombre").value,
+          tipoproducto: document.getElementById("tipoproducto").value,
+          costoproducto: document.getElementById("costoproducto").value,
+          unidadmedida: document.getElementById("unidadmedida").value
+      };
 
-    // Pedimos los productos para ver si ya existe ese código
-    let res = await fetch("producto.php");
-    let productos = await res.json();
+      let res = await fetch("producto.php");
+      let productos = await res.json();
 
-    let existe = productos.some(p => p.codigoproducto === data.codigoproducto);
-    let method = existe ? "PUT" : "POST";
+      let existe = productos.some(p => p.codigoproducto === data.codigoproducto);
+      let method = existe ? "PUT" : "POST";
 
-    await fetch("producto.php", {
-        method: method,
-        body: JSON.stringify(data)
-    });
+      await fetch("producto.php", {
+          method: method,
+          body: JSON.stringify(data)
+      });
 
-    e.target.reset();
-    cargarProductos();
+      e.target.reset();
+      cargarProductos();
     });
 
     cargarProductos();

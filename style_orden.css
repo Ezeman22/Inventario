@@ -1,0 +1,126 @@
+/* === ESTILO GENERAL === */
+body {
+  margin: 0;
+  padding: 0;
+
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: linear-gradient(180deg, #071024 0%, #081426 60%);
+  color: #222;
+}
+
+header {
+  color: white;
+
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+  margin-top: 20px;
+  color: #1f3c88;
+}
+
+.contenedor {
+  max-width: 1000px;
+  margin: 30px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* === FORMULARIOS === */
+.formulario {
+  margin-top: 15px;
+}
+
+.inputs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+label {
+  font-weight: bold;
+  color: #333;
+}
+
+select, input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+}
+
+select:focus, input:focus {
+  border-color: #1f3c88;
+}
+
+/* === TABLAS === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background: #e9eefc;
+}
+
+tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* === BOTONES === */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  transition: background 0.2s ease;
+}
+
+.btnPrincipal {
+  background-color: #1f3c88;
+  color: white;
+}
+
+.btnPrincipal:hover {
+  background-color: #2a4fa1;
+}
+
+.btnEliminar {
+  background-color: #d62828;
+  color: white;
+}
+
+.btnEliminar:hover {
+  background-color: #a4161a;
+}
+
+/* === LISTA === */
+.lista {
+  list-style: none;
+  padding: 0;
+  margin-top: 15px;
+}
+
+.lista li {
+  background: #f3f4f6;
+  margin: 6px 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}

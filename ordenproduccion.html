@@ -2,46 +2,45 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>ABM Orden de Producción</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background: #f4f4f4; }
-    select, input, button { margin: 5px; padding: 5px; }
-  </style>
+  <title>Órdenes de Producción</title>
+  <link rel="stylesheet" href="style_orden.css">
 </head>
 <body>
-  <h1>Órdenes de Producción</h1>
+  <header>
+    <h1>Gestión de Órdenes de Producción</h1>
+  </header>
 
-  <h2>Crear nueva orden</h2>
-  <form id="formOrden">
-    <label>Producto:</label>
-    <select id="producto"></select>
+  <section class="contenedor">
+    <h2>Crear Nueva Orden</h2>
+    <form id="formOrden" class="formulario">
+      <div class="inputs">
+        <label>Producto:</label>
+        <select id="producto"></select>
 
-    <label>Fórmula:</label>
-    <select id="formula"></select>
+        <label>Fórmula:</label>
+        <select id="formula"></select>
 
-    <label>Cantidad a producir:</label>
-    <input type="number" id="cantidad" value="1" min="1">
+        <label>Cantidad a producir:</label>
+        <input type="number" id="cantidad" value="1" min="1">
+      </div>
+      <button type="submit" class="btnPrincipal">Guardar Orden</button>
+    </form>
 
-    <button type="submit">Guardar Orden</button>
-  </form>
+    <h3>Detalle Necesario</h3>
+    <table id="tablaDetalle">
+      <thead>
+        <tr>
+          <th>Componente</th>
+          <th>Cantidad por unidad</th>
+          <th>Total requerido</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <h3>Detalle necesario</h3>
-  <table id="tablaDetalle">
-    <thead>
-      <tr>
-        <th>Componente</th>
-        <th>Cantidad por unidad</th>
-        <th>Total requerido</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <h2>Órdenes existentes</h2>
-  <ul id="listaOrdenes"></ul>
+    <h2>Órdenes Existentes</h2>
+    <ul id="listaOrdenes" class="lista"></ul>
+  </section>
 
   <script>
     let formulas = [];
@@ -125,8 +124,11 @@
       lista.innerHTML = "";
       data.forEach(o=>{
         let li = document.createElement("li");
-        li.innerHTML = `Orden #${o.id_orden} - Prod: ${o.producto} - Cant: ${o.cantidad} - Estado: ${o.estado}
-          <button onclick="eliminarOrden(${o.id_orden})">Eliminar</button>`;
+        li.innerHTML = `
+          <div>
+            <strong>Orden #${o.id_orden}</strong> - ${o.producto} | Cant: ${o.cantidad} | Estado: ${o.estado}
+          </div>
+          <button class="btnEliminar" onclick="eliminarOrden(${o.id_orden})">Eliminar</button>`;
         lista.appendChild(li);
       });
     }
@@ -145,3 +147,4 @@
   </script>
 </body>
 </html>
+

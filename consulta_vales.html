@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta de Vales de Producción</title>
+  <link rel="stylesheet" href="style_orden.css">
+</head>
+<body>
+  <header>
+    <h1>Consulta de Vales de Producción</h1>
+  </header>
+
+  <div class="contenedor">
+    <div class="formulario">
+      <h2>Seleccionar Orden de Producción</h2>
+      <div class="inputs">
+        <label for="ordenSelect">Orden:</label>
+        <select id="ordenSelect">
+          <option value="">Seleccione una orden...</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="valesSection" style="display:none;">
+      <h2>Vales Asociados</h2>
+      <div class="inputs">
+        <label for="valeSelect">Vale:</label>
+        <select id="valeSelect">
+          <option value="">Seleccione un vale...</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="detalleVale" style="display:none;">
+      <h2>Detalle del Vale</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Código Componente</th>
+            <th>Descripción</th>
+            <th>Puesto</th>
+            <th>Cantidad</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody id="tablaDetalleVale"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    async function cargarOrdenes() {
+      try {
+        const res = await fetch("valeproduccion_lectura.php?accion=ordenes");
+        const data = await res.json();
+        const sel = document.getElementById("ordenSelect");
+        sel.innerHTML = '<option value="">Seleccione una orden...</option>';
+
+        data.forEach(o => {
+          const opt = document.createElement("option");
+          opt.value = o.id_orden;
+          opt.textContent = `#${o.id_orden} - ${o.nombre}`;
+          sel.appendChild(opt);
+        });
+
+        sel.addEventListener("change", () => {
+          const id = sel.value;
+          if (id) cargarVales(id);
+          else document.getElementById("valesSection").style.display = "none";
+        });
+      } catch (err) {
+        console.error("Error cargando órdenes:", err);
+      }
+    }
+
+    async function cargarVales(idOrden) {
+      try {
+        const res = await fetch(`valeproduccion.php?accion=vales_por_orden&id_orden=${idOrden}`);
+        const vales = await res.json();
+
+        const sel = document.getElementById("valeSelect");
+        sel.innerHTML = '<option value="">Seleccione un vale...</option>';
+        vales.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v.id_vale;
+          opt.textContent = `${v.codigo} - (${v.fecha})`;
+          sel.appendChild(opt);
+        });
+
+        document.getElementById("valesSection").style.display = "block";
+        document.getElementById("detalleVale").style.display = "none";
+
+        sel.addEventListener("change", () => {
+          const idVale = sel.value;
+          if (idVale) cargarDetalleVale(idVale);
+          else document.getElementById("detalleVale").style.display = "none";
+        });
+      } catch (err) {
+        console.error("Error cargando vales:", err);
+      }
+    }
+
+    async function cargarDetalleVale(idVale) {
+      try {
+        const res = await fetch(`valeproduccion.php?accion=detalle_vale&id_vale=${idVale}`);
+        const detalle = await res.json();
+
+        const tbody = document.getElementById("tablaDetalleVale");
+        tbody.innerHTML = "";
+
+        if (detalle.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5">Sin componentes registrados.</td></tr>`;
+        } else {
+          detalle.forEach(d => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${d.codigoproducto ?? '-'}</td>
+              <td>${d.nombre ?? '-'}</td>
+              <td>${d.nropuesto ?? '-'}</td>
+              <td>${d.cantidad ?? 0}</td>
+              <td>${d.fecha ?? '-'}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.getElementById("detalleVale").style.display = "block";
+      } catch (err) {
+        console.error("Error cargando detalle del vale:", err);
+      }
+    }
+
+    cargarOrdenes();
+  </script>
+</body>
+</html>

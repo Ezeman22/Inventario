@@ -3,48 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <title>Lectura de Puestos - Producción</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1, h2 { color: #333; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background: #f3f3f3; }
-    button { padding: 5px 10px; cursor: pointer; border-radius: 4px; }
-    .btnDeshabilitado { background: #ccc; color: #555; cursor: not-allowed; }
-    .ok { background: #4caf50; color: white; }
-  </style>
+  <link rel="stylesheet" href="style_lectura.css">
 </head>
 <body>
-  <h1>Lectura de Puestos</h1>
+  <header>
+    <h1>Lectura de Puestos - Producción</h1>
+  </header>
 
-  <label>Orden de Producción:</label>
-  <select id="ordenSelect"></select>
+  <div class="contenedor">
+    <section class="formulario">
+      <h2>Seleccionar Orden de Producción</h2>
+      <div class="inputs">
+        <label>Orden de Producción:</label>
+        <select id="ordenSelect"></select>
+      </div>
+    </section>
 
-  <div id="infoOrden" style="display:none; margin-top:10px;">
-    <h3>Datos de Orden</h3>
-    <p><b>Producto:</b> <span id="producto"></span></p>
-    <p><b>Descripción:</b> <span id="descripcion"></span></p>
-    <p><b>Cantidad Planificada:</b> <span id="cantPlan"></span></p>
-    <p><b>Cantidad Producida:</b> <span id="cantProd"></span></p>
-  </div>
+    <section id="infoOrden" class="formulario" style="display:none;">
+      <h2>Datos de la Orden</h2>
+      <div class="inputs">
+        <label>Producto:</label>
+        <span id="producto"></span>
+        <label>Descripción:</label>
+        <span id="descripcion"></span>
+      </div>
+      <div class="inputs">
+        <label>Cantidad Planificada:</label>
+        <span id="cantPlan"></span>
+        <label>Cantidad Producida:</label>
+        <span id="cantProd"></span>
+        <label>Vale Actual:</label>
+        <span id="valeActual"></span>
+      </div>
+      <button id="btnCerrarVale" class="btnPrincipal" style="display:none;">Cerrar Vale</button>
+    </section>
 
-  <div id="seccionVale" style="display:none; margin-top:15px;">
-    <label>Nro Puesto:</label>
-    <input type="number" id="nroPuesto" min="1" value="1">
-    <button id="btnCargarComp">Cargar Componentes</button>
+    <section id="seccionVale" class="formulario" style="display:none;">
+      <h2>Gestión de Puesto</h2>
+      <div class="inputs">
+        <label>Nro Puesto:</label>
+        <input type="number" id="nroPuesto" min="1" value="1">
+        <button id="btnCargarComp" class="btnPrincipal">Cargar Componentes</button>
+      </div>
 
-    <table id="tablaComponentes" style="display:none;">
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Descripción</th>
-          <th>Orden</th>
-          <th>Cantidad</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+      <div class="inputs" style="margin-top: 20px;">
+        <label for="modoScanner">Modo escáner:</label>
+        <input type="checkbox" id="modoScanner" />
+        <label for="codigoScanner">Código leído:</label>
+        <input type="text" id="codigoScanner" placeholder="Escaneá o escribí código..." disabled />
+      </div>
+
+      <table id="tablaComponentes" style="display:none;">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>Orden</th>
+            <th>Cantidad</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
   </div>
 
   <script>
@@ -74,19 +95,82 @@
       const data = await res.json();
       ordenActual = data.orden;
       nroFormulaActual = data.orden.nroformula;
+
       document.getElementById("infoOrden").style.display = "block";
       document.getElementById("seccionVale").style.display = "block";
 
       document.getElementById("producto").textContent = ordenActual.producto;
       document.getElementById("descripcion").textContent = ordenActual.nombre;
       document.getElementById("cantPlan").textContent = ordenActual.cantidad_planificada;
-      document.getElementById("cantProd").textContent = ordenActual.cantidad_producida;
+      document.getElementById("cantProd").textContent = data.cantidad_producida;
+      document.getElementById("valeActual").textContent = data.vales.codigo;
+      valeActual = data.vales.id_vale;
     }
 
     document.getElementById("btnCargarComp").addEventListener("click", async () => {
       const puesto = document.getElementById("nroPuesto").value;
 
-      // Crear un vale pendiente o recuperar uno activo
+      // === CONTROL DEL MODO SCANNER ===
+      const modoScanner = document.getElementById("modoScanner");
+      const inputScanner = document.getElementById("codigoScanner");
+
+      modoScanner.addEventListener("change", () => {
+        if (modoScanner.checked) {
+          inputScanner.disabled = false;
+          inputScanner.focus();
+        } else {
+          inputScanner.disabled = true;
+          inputScanner.value = "";
+        }
+      });
+
+      // === LECTURA DE CÓDIGO DE BARRAS ===
+      inputScanner.addEventListener("keypress", async (e) => {
+        if (e.key === "Enter" && inputScanner.value.trim() !== "") {
+          const codigoLeido = inputScanner.value.trim();
+          inputScanner.value = ""; // limpia el campo después de leer
+
+          // Busca el componente en la tabla
+          const filas = document.querySelectorAll("#tablaComponentes tbody tr");
+          let encontrado = false;
+
+          for (const fila of filas) {
+            const codigoCelda = fila.children[0].textContent.trim(); // primera columna = codigoproducto
+            if (codigoCelda === codigoLeido) {
+              const btn = fila.querySelector(".btnEnsamblar:not([disabled])");
+              if (btn) {
+                encontrado = true;
+                btn.click(); // 🔥 dispara el ensamblado automáticamente
+              }
+              break;
+            }
+          }
+
+          if (!encontrado) {
+            alert("⚠️ El código " + codigoLeido + " no se encuentra en la lista o ya fue ensamblado.");
+          }
+        }
+      });
+
+      if (puesto > 1) {
+        const validarRes = await fetch("valeproduccion.php", {
+          method: "POST",
+          body: JSON.stringify({
+            accion: "validar_puesto_anterior",
+            codigoop: ordenActual.id_orden,
+            nroformula: nroFormulaActual,
+            id_vale: valeActual?.id_vale ?? 0,
+            puesto_actual: puesto
+          })
+        });
+        const validarData = await validarRes.json();
+
+        if (!validarData.permitido) {
+          alert(`⚠️ No podés cargar el puesto ${puesto} porque aún no se ensamblaron todos los componentes del puesto ${puesto - 1}.`);
+          return;
+        }
+      }
+
       const valeRes = await fetch("valeproduccion.php", {
         method: "POST",
         body: JSON.stringify({
@@ -99,37 +183,53 @@
       });
       valeActual = await valeRes.json();
 
-      const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}`);
+      const res = await fetch(`valeproduccion.php?accion=componentes&nroformula=${nroFormulaActual}&puesto=${puesto}&id_vale=${valeActual.id_vale}`);
       componentes = await res.json();
 
       const tbody = document.querySelector("#tablaComponentes tbody");
       tbody.innerHTML = "";
+      let ensamblados = 0;
+
       componentes.forEach(c => {
         const tr = document.createElement("tr");
+        const esEnsamblado = c.ensamblado == 1;
+        if (esEnsamblado) ensamblados++;
+
         tr.innerHTML = `
           <td>${c.codigoproducto}</td>
           <td>${c.nombre}</td>
           <td>${c.orden}</td>
-          <td>${(c.cantidad * ordenActual.cantidad_planificada).toFixed(2)}</td>
-          <td><button class="btnEnsamblar">Ensamblar</button></td>`;
-        
+          <td>${c.cantidad}</td>
+          <td>
+            ${esEnsamblado
+              ? '<button class="btnPrincipal" style="background:#ccc; cursor:not-allowed;">Ensamblado</button>'
+              : '<button class="btnPrincipal btnEnsamblar">Ensamblar</button>'
+            }
+          </td>`;
+
         const btn = tr.querySelector(".btnEnsamblar");
-        btn.addEventListener("click", async () => {
-          btn.disabled = true;
-          btn.textContent = "Procesando...";
-          const exito = await ensamblar(c.codigoproducto, btn);
-          if (exito) {
-            btn.textContent = "Ensamblado";
-            btn.classList.add("btnDeshabilitado");
-            verificarCierreVale();
-          } else {
-            btn.disabled = false;
-            btn.textContent = "Ensamblar";
-          }
-        });
+        if (btn) {
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            btn.textContent = "Procesando...";
+            const exito = await ensamblar(c.codigoproducto, btn);
+            if (exito) {
+              btn.textContent = "Ensamblado";
+              btn.style.background = "#ccc";
+              btn.style.cursor = "not-allowed";
+              verificarCierreVale();
+            } else {
+              btn.disabled = false;
+              btn.textContent = "Ensamblar";
+            }
+          });
+        }
+
         tbody.appendChild(tr);
       });
+
       document.getElementById("tablaComponentes").style.display = "table";
+
     });
 
     async function ensamblar(codHijo, btn) {
@@ -138,7 +238,8 @@
         id_vale: valeActual.id_vale,
         codigoop: ordenActual.id_orden,
         producto_padre: ordenActual.producto,
-        producto_hijo: codHijo
+        producto_hijo: codHijo,
+        nropuesto: document.getElementById("nroPuesto").value
       };
 
       const res = await fetch("valeproduccion.php", {
@@ -152,27 +253,53 @@
     }
 
     async function verificarCierreVale() {
-      const ensamblados = [...document.querySelectorAll(".btnEnsamblar.btnDeshabilitado")].length;
-      const total = componentes.length;
+      const res = await fetch("valeproduccion.php", {
+        method: "POST",
+        body: JSON.stringify({
+          accion: "verificar_cierre_vale",
+          id_vale: valeActual.id_vale,
+          codigoop: ordenActual.id_orden,
+          nroformula: nroFormulaActual
+        })
+      });
 
-      if (ensamblados === total) {
-        // cerrar vale
-        const res = await fetch("valeproduccion.php", {
-          method: "POST",
-          body: JSON.stringify({
-            accion: "cerrar_vale",
-            id_vale: valeActual.id_vale,
-            codigoop: ordenActual.id_orden
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert("Vale terminado correctamente ✅");
-          document.getElementById("cantProd").textContent = data.nueva_cantidad_producida;
-          valeActual = null;
-        }
+      const data = await res.json();
+      if (data.success && data.completo) {
+        document.getElementById("btnCerrarVale").style.display = "inline-block";
+      } else {
+        document.getElementById("btnCerrarVale").style.display = "none";
       }
     }
+
+    document.getElementById("btnCerrarVale").addEventListener("click", async () => {
+      if (!valeActual || !ordenActual) return;
+      if (!confirm("¿Deseás cerrar el vale actual y generar uno nuevo?")) return;
+
+      const res = await fetch("valeproduccion.php", {
+        method: "POST",
+        body: JSON.stringify({
+          accion: "cerrar_y_crear_vale",
+          id_vale: valeActual.id_vale,
+          codigoop: ordenActual.id_orden,
+          producto_padre: ordenActual.producto,
+          cantidad_planificada: ordenActual.cantidad_planificada
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("Vale cerrado y nuevo vale creado correctamente ✅");
+        document.getElementById("cantProd").textContent = data.nueva_cantidad_producida;
+        document.getElementById("valeActual").textContent = data.nuevo_vale.codigo ?? `VP${String(data.nuevo_vale.numero).padStart(5, '0')}`;
+        valeActual = data.nuevo_vale;
+        document.getElementById("btnCerrarVale").style.display = "none";
+        document.querySelector("#tablaComponentes tbody").innerHTML = "";
+        document.getElementById("tablaComponentes").style.display = "none";
+        alert("Podés comenzar a cargar los componentes del nuevo vale.");
+      } else {
+        alert("❌ Error al cerrar y crear nuevo vale.");
+      }
+    });
 
     cargarOrdenes();
   </script>

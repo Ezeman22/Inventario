@@ -40,13 +40,16 @@ switch ($method) {
             $produccion = $res->fetch_assoc()["cantidad_producida"];
 
             // Listado de vales asociados
-            $sql = "SELECT id_vale, codigo, numero, fecha, cantidad_planificada, cantidad_producida, nropuesto, estado
+            $sql = "SELECT id_vale, codigo, numero, fecha, cantidad_planificada, cantidad_producida,  estado
                     FROM valeproduccion
-                    WHERE codigoop = $id
-                    ORDER BY nropuesto, id_vale";
-            $vales = [];
+                    WHERE codigoop = $id and estado = 'pendiente'
+                    ORDER BY  id_vale";
             $res = $conn->query($sql);
-            while ($r = $res->fetch_assoc()) $vales[] = $r;
+            $vales = $res->fetch_assoc();
+            //$vales = [];
+            //$res = $conn->query($sql);
+            //while ($r = $res->fetch_assoc()) $vales[] = $r;
+
 
             echo json_encode([
                 "orden" => $orden,

@@ -2,57 +2,64 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>ABM Fórmulas</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background: #f4f4f4; }
-    select, input { margin: 5px; padding: 5px; }
-    button { margin: 5px; padding: 5px 10px; }
-    #detalleForm tr td input { width: 80px; }
-  </style>
+  <title>ABM de Fórmulas</title>
+  <link rel="stylesheet" href="style_formula.css">
 </head>
 <body>
-  <h1>Fórmulas</h1>
+  <header>
+    <h1>Gestión de Fórmulas</h1>
+  </header>
 
-  <label>Producto Terminado:</label>
-  <select id="productoSelect"></select>
+  <section class="contenedor">
+    <div class="selector">
+      <label for="productoSelect">Producto Terminado:</label>
+      <select id="productoSelect"></select>
+    </div>
 
-  <h2>Fórmulas</h2>
-  <ul id="listaFormulas"></ul>
+    <h2>Fórmulas Existentes</h2>
+    <ul id="listaFormulas" class="lista"></ul>
 
-  <h3>Detalle de Fórmula</h3>
-  <table id="tablaDetalle">
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Nombre</th>
-        <th>Tipo</th>
-        <th>Cantidad</th>
-        <th>Orden</th>
-        <th>Puesto</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <h2>Nueva Fórmula</h2>
-  <form id="formNueva">
-    <input type="text" id="nroformula" placeholder="Nro Fórmula" required>
-    <input type="text" id="version" placeholder="Versión" required>
-    <table id="detalleForm">
+    <h3>Detalle de Fórmula</h3>
+    <table id="tablaDetalle">
       <thead>
         <tr>
-          <th>Componente</th><th>Cantidad</th><th>orden</th><th>puesto</th><th>Acción</th>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Cantidad</th>
+          <th>Orden</th>
+          <th>Puesto</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
-    <button type="button" onclick="agregarFila()">Agregar Componente</button>
-    <button type="submit">Guardar Fórmula</button>
-  </form>
+
+    <h2>Nueva Fórmula</h2>
+    <form id="formNueva" class="formulario">
+      <div class="inputs">
+        <input type="text" id="nroformula" placeholder="Nro Fórmula" required>
+        <input type="text" id="version" placeholder="Versión" required>
+      </div>
+
+      <table id="detalleForm">
+        <thead>
+          <tr>
+            <th>Componente</th>
+            <th>Cantidad</th>
+            <th>Orden</th>
+            <th>Puesto</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="acciones">
+        <button type="button" class="btnSecundario" onclick="agregarFila()">Agregar Componente</button>
+        <button type="submit" class="btnPrincipal">Guardar Fórmula</button>
+      </div>
+    </form>
+  </section>
 
   <script>
     let productos = [];
@@ -79,9 +86,9 @@
       lista.innerHTML = "";
       data.forEach(f=>{
         let li = document.createElement("li");
-        li.innerHTML = `${f.nroformula} (v${f.version}) 
-          <button onclick="verDetalle('${f.nroformula}')">Ver</button>
-          <button onclick="eliminarFormula('${f.nroformula}')">Eliminar</button>`;
+        li.innerHTML = `${f.nroformula} (v${f.version})
+          <button class="btnAccion" onclick="verDetalle('${f.nroformula}')">Ver</button>
+          <button class="btnEliminar" onclick="eliminarFormula('${f.nroformula}')">Eliminar</button>`;
         lista.appendChild(li);
       });
     }
@@ -93,7 +100,7 @@
       tbody.innerHTML = "";
       data.forEach(d=>{
         let tr = document.createElement("tr");
-        tr.innerHTML = `<td>${d.componentes}</td><td>${d.nombre}</td><td>${d.tipoproducto}</td><td>${d.cantidad}</td><td>${d.orden}</td><td>${d.puesto}</td> `;
+        tr.innerHTML = `<td>${d.componentes}</td><td>${d.nombre}</td><td>${d.tipoproducto}</td><td>${d.cantidad}</td><td>${d.orden}</td><td>${d.puesto}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -114,10 +121,11 @@
         <td><input type="text" placeholder="Código componente"></td>
         <td><input type="number" step="0.01" value="1"></td>
         <td><input type="number" step="1" value="1"></td>
-        <td><input type="number" step="1" value="1"></td> 
-        <td><button type="button" onclick="this.parentNode.parentNode.remove()">X</button></td>`;
+        <td><input type="number" step="1" value="1"></td>
+        <td><button type="button" class="btnEliminar" onclick="this.parentNode.parentNode.remove()">X</button></td>`;
       tbody.appendChild(tr);
     }
+
     document.getElementById("formNueva").addEventListener("submit", async (e)=>{
       e.preventDefault();
       let producto = document.getElementById("productoSelect").value;
@@ -142,6 +150,7 @@
       document.querySelector("#detalleForm tbody").innerHTML = "";
       cargarFormulas(producto);
     });
+
     cargarProductosTerminados();
   </script>
 </body>

@@ -1,86 +1,152 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Producción</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    select, table { margin-top: 15px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #f4f4f4; }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel de Producción — Ensamblado</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Órdenes de Producción</h1>
+  <header>
+    <div class="brand">
+      <div class="logo">PC</div>
+      <div>
+        <h1>Panel de Producción</h1>
+        <p class="lead">Gestión de recetas, órdenes y vales — Ensamblado de notebooks</p>
+      </div>
+    </div>
 
-  <label for="formula">Seleccionar Fórmula:</label>
-  <select id="formula"></select>
+    <nav>
+      <a href="productos.html">Productos</a>
+      <a href="formulas.html">Fórmulas</a>
+      <a href="ordenproduccion.html">Órdenes</a>
+      <a class="primary" href="lectura_puestos.html">Lectura de Puestos</a>
+      <a href="consulta_vales.html">Vales</a>
+    </nav>
+  </header>
 
-  <button>Seleccionar</button>
+  <main>
+    <!-- Panel principal con enlaces -->
+    <section class="panel">
+      <h2>Accesos rápidos</h2>
+      <p class="subtext">Abrí cualquiera de las secciones para administrar productos, fórmulas, órdenes y vales.</p>
 
-  <h2 id="productoTerminado"></h2>
+      <div class="grid-links">
+        <a class="card-link" href="productos.html">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="3" width="20" height="14" rx="2" stroke="url(#g1)" stroke-width="1.2" fill="rgba(255,255,255,0.01)"/>
+            <circle cx="8" cy="10" r="2.4" fill="url(#g2)"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#00bfa6"/>
+                <stop offset="1" stop-color="#ff7a59"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#00bfa6"/>
+                <stop offset="1" stop-color="#30e1b8"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div>
+            <p class="card-title">Productos</p>
+            <p class="card-desc">Ver/ABM de productos y stock</p>
+          </div>
+        </a>
 
-  <table id="detalleTabla">
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Nombre</th>
-        <th>Tipo</th>
-        <th>Cantidad Necesaria</th>
-        <th>Stock Disponible</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+        <a class="card-link" href="formulas.html">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="18" height="16" rx="2" stroke="url(#g3)" stroke-width="1.2" fill="rgba(255,255,255,0.01)"/>
+            <path d="M7 9h10M7 13h7" stroke="url(#g4)" stroke-width="1.2" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ff7a59"/>
+                <stop offset="1" stop-color="#ffd1b8"/>
+              </linearGradient>
+              <linearGradient id="g4" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ff7a59"/>
+                <stop offset="1" stop-color="#ffb190"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div>
+            <p class="card-title">Fórmulas</p>
+            <p class="card-desc">BOM: definir componentes y puestos</p>
+          </div>
+        </a>
+
+        <a class="card-link" href="ordenproduccion.html">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="3" width="12" height="18" rx="2" stroke="url(#g5)" stroke-width="1.2" fill="rgba(255,255,255,0.01)"/>
+            <path d="M9 8h6M9 12h6M9 16h4" stroke="url(#g6)" stroke-width="1.2" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="g5" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#7fd3ff"/>
+                <stop offset="1" stop-color="#6b9eff"/>
+              </linearGradient>
+              <linearGradient id="g6" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#7fd3ff"/>
+                <stop offset="1" stop-color="#a6c8ff"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div>
+            <p class="card-title">Órdenes</p>
+            <p class="card-desc">Crear y consultar órdenes de producción</p>
+          </div>
+        </a>
+
+        <a class="card-link" href="lectura_puestos.html">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="6" width="20" height="12" rx="2" fill="rgba(255,255,255,0.02)" stroke="url(#g7)" stroke-width="1.2"/>
+            <path d="M7 12h10M12 8v8" stroke="url(#g8)" stroke-width="1.4" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="g7" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#00bfa6"/>
+                <stop offset="1" stop-color="#00e6b0"/>
+              </linearGradient>
+              <linearGradient id="g8" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#00bfa6"/>
+                <stop offset="1" stop-color="#ff7a59"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div>
+            <p class="card-title">Lectura de Puestos</p>
+            <p class="card-desc">Ensamblado en piso: crear y cerrar vales</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="cta">
+        <button class="btn btn-primary" onclick="location.href='lectura_puestos.html'">Ir a Lectura de Puestos</button>
+        <button class="btn btn-outline" onclick="location.href='ordenproduccion.html'">Ver Órdenes</button>
+      </div>
+    </section>
+
+    <!-- Lado derecho -->
+    <aside class="hero">
+      <div>
+        <h3>Ensamblado • Control visual</h3>
+        <p class="subtext">Panel central para comenzar la producción, crear vales y controlar el avance por puesto.</p>
+      </div>
+      <div class="illustration">
+        <svg width="96" height="96" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="12" y="18" width="104" height="70" rx="6" fill="rgba(255,255,255,0.02)"/>
+          <rect x="26" y="32" width="76" height="42" rx="4" fill="#071827"/>
+          <g transform="translate(70,28)">
+            <circle cx="22" cy="32" r="12" fill="#00bfa6"/>
+          </g>
+        </svg>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    © <span id="anio"></span> Planta de Ensamblado — Panel de Producción
+  </footer>
 
   <script>
-    async function cargarFormulas(){
-      let res = await fetch("get_formulas.php");
-      let formulas = await res.json();
-      let select = document.getElementById("formula");
-
-      formulas.forEach(f => {
-        let opt = document.createElement("option");
-        opt.value = f.nroformula;
-        opt.textContent = `${f.nroformula} - ${f.producto}`;
-        select.appendChild(opt);
-      });
-
-      if(formulas.length > 0){
-        mostrarDetalle(formulas[0].nroformula, formulas[0].producto);
-      }
-
-      select.addEventListener("change", e => {
-        let prod = formulas.find(f => f.nroformula === e.target.value).producto;
-        mostrarDetalle(e.target.value, prod);
-      });
-    }
-
-    async function mostrarDetalle(nroformula, producto){
-      document.getElementById("productoTerminado").textContent =
-        "Producto a producir: " + producto;
-
-      let res = await fetch("get_detalle_formula.php?nroformula=" + nroformula);
-      let detalle = await res.json();
-
-      let tbody = document.querySelector("#detalleTabla tbody");
-      tbody.innerHTML = "";
-
-      detalle.forEach(d => {
-        let tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${d.componentes}</td>
-          <td>${d.nombre}</td>
-          <td>${d.tipoproducto}</td>
-          <td>${d.cantidad}</td>
-          <td>${d.stock}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    cargarFormulas();
+    document.getElementById('anio').textContent = new Date().getFullYear();
   </script>
 </body>
 </html>

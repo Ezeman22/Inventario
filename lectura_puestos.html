@@ -46,6 +46,13 @@
         <button id="btnCargarComp" class="btnPrincipal">Cargar Componentes</button>
       </div>
 
+      <div class="inputs" style="margin-top: 20px;">
+        <label for="modoScanner">Modo escáner:</label>
+        <input type="checkbox" id="modoScanner" />
+        <label for="codigoScanner">Código leído:</label>
+        <input type="text" id="codigoScanner" placeholder="Escaneá o escribí código..." disabled />
+      </div>
+
       <table id="tablaComponentes" style="display:none;">
         <thead>
           <tr>
@@ -102,6 +109,48 @@
 
     document.getElementById("btnCargarComp").addEventListener("click", async () => {
       const puesto = document.getElementById("nroPuesto").value;
+
+      // === CONTROL DEL MODO SCANNER ===
+      const modoScanner = document.getElementById("modoScanner");
+      const inputScanner = document.getElementById("codigoScanner");
+
+      modoScanner.addEventListener("change", () => {
+        if (modoScanner.checked) {
+          inputScanner.disabled = false;
+          inputScanner.focus();
+        } else {
+          inputScanner.disabled = true;
+          inputScanner.value = "";
+        }
+      });
+
+      // === LECTURA DE CÓDIGO DE BARRAS ===
+      inputScanner.addEventListener("keypress", async (e) => {
+        if (e.key === "Enter" && inputScanner.value.trim() !== "") {
+          const codigoLeido = inputScanner.value.trim();
+          inputScanner.value = ""; // limpia el campo después de leer
+
+          // Busca el componente en la tabla
+          const filas = document.querySelectorAll("#tablaComponentes tbody tr");
+          let encontrado = false;
+
+          for (const fila of filas) {
+            const codigoCelda = fila.children[0].textContent.trim(); // primera columna = codigoproducto
+            if (codigoCelda === codigoLeido) {
+              const btn = fila.querySelector(".btnEnsamblar:not([disabled])");
+              if (btn) {
+                encontrado = true;
+                btn.click(); // 🔥 dispara el ensamblado automáticamente
+              }
+              break;
+            }
+          }
+
+          if (!encontrado) {
+            alert("⚠️ El código " + codigoLeido + " no se encuentra en la lista o ya fue ensamblado.");
+          }
+        }
+      });
 
       if (puesto > 1) {
         const validarRes = await fetch("valeproduccion.php", {
@@ -181,7 +230,6 @@
 
       document.getElementById("tablaComponentes").style.display = "table";
 
-      
     });
 
     async function ensamblar(codHijo, btn) {

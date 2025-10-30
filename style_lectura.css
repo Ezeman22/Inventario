@@ -194,4 +194,13 @@ input:focus {
     width: 100%;
   }
 }
+#codigoScanner {
+  width: 200px;
+  transition: all 0.2s ease;
+}
+
+#codigoScanner:disabled {
+  background: #eee;
+  color: #777;
+}
 
